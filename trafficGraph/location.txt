@@ -1,0 +1,157 @@
+ID: 1
+X: 8873.33
+Y: 9561.99
+Z: 40.7406
+Name: Location0
+Connections:
+StartID:1
+EndID:4
+Distance:8964.16
+StartID:1
+EndID:5
+Distance:6521.07
+StartID:4
+EndID:1
+Distance:8964.16
+StartID:6
+EndID:1
+Distance:6108.96
+StartID:7
+EndID:1
+Distance:5449.95
+
+ID: 2
+X: 1945.52
+Y: 9854.81
+Z: 20.506
+Name: Location1
+Connections:
+StartID:2
+EndID:3
+Distance:9583.33
+StartID:2
+EndID:6
+Distance:8551.81
+StartID:3
+EndID:2
+Distance:9583.33
+StartID:4
+EndID:2
+Distance:6623.48
+
+ID: 3
+X: 8973.37
+Y: 3339.58
+Z: 59.4917
+Name: Location2
+Connections:
+StartID:2
+EndID:3
+Distance:9583.33
+StartID:3
+EndID:6
+Distance:1258.58
+StartID:3
+EndID:2
+Distance:9583.33
+StartID:3
+EndID:4
+Distance:6470.6
+StartID:6
+EndID:3
+Distance:1258.58
+
+ID: 4
+X: 2503.38
+Y: 3254.87
+Z: 33.0108
+Name: Location3
+Connections:
+StartID:1
+EndID:4
+Distance:8964.16
+StartID:3
+EndID:4
+Distance:6470.6
+StartID:4
+EndID:1
+Distance:8964.16
+StartID:4
+EndID:6
+Distance:5239.87
+StartID:4
+EndID:2
+Distance:6623.48
+StartID:7
+EndID:4
+Distance:5768.03
+
+ID: 5
+X: 9786.68
+Y: 3105.21
+Z: 29.3571
+Name: Location4
+Connections:
+StartID:1
+EndID:5
+Distance:6521.07
+StartID:5
+EndID:6
+Distance:2102.26
+StartID:5
+EndID:7
+Distance:8609.7
+StartID:6
+EndID:5
+Distance:2102.26
+
+ID: 6
+X: 7734.32
+Y: 3560.16
+Z: 47.8062
+Name: Location5
+Connections:
+StartID:2
+EndID:6
+Distance:8551.81
+StartID:3
+EndID:6
+Distance:1258.58
+StartID:4
+EndID:6
+Distance:5239.87
+StartID:5
+EndID:6
+Distance:2102.26
+StartID:6
+EndID:3
+Distance:1258.58
+StartID:6
+EndID:5
+Distance:2102.26
+StartID:6
+EndID:1
+Distance:6108.96
+StartID:7
+EndID:6
+Distance:6874.5
+
+ID: 7
+X: 3458.63
+Y: 8943.22
+Z: 51.0821
+Name: Location6
+Connections:
+StartID:5
+EndID:7
+Distance:8609.7
+StartID:7
+EndID:6
+Distance:6874.5
+StartID:7
+EndID:1
+Distance:5449.95
+StartID:7
+EndID:4
+Distance:5768.03
+
