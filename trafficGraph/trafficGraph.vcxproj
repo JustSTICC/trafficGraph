@@ -153,6 +153,7 @@
     <ClCompile Include="memory.cpp" />
     <ClCompile Include="RuleType.cpp" />
     <ClCompile Include="scene.cpp" />
+    <ClCompile Include="square_mesh.cpp" />
     <ClCompile Include="TrafficRule.cpp" />
     <ClCompile Include="triangle_mesh.cpp" />
     <ClCompile Include="vertex_menagerie.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="RuleType.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="shaders.h" />
+    <ClInclude Include="square_mesh.h" />
     <ClInclude Include="swapchain.h" />
     <ClInclude Include="sync.h" />
     <ClInclude Include="TrafficRule.h" />

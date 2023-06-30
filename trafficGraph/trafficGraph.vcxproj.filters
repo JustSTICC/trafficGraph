@@ -25,6 +25,9 @@
     <Filter Include="Header Files\Engine">
       <UniqueIdentifier>{ad445897-85df-4de1-92bf-fb715ccef140}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Models">
+      <UniqueIdentifier>{edc48d05-a8c1-444c-b178-466c810f9615}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -42,29 +45,32 @@
     <ClCompile Include="RuleType.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Engine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="instance.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="app.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="scene.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="memory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="triangle_mesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vertex_menagerie.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="logging.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scene.cpp">
+      <Filter>Header Files\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="triangle_mesh.cpp">
+      <Filter>Header Files\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="square_mesh.cpp">
+      <Filter>Header Files\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="vertex_menagerie.cpp">
+      <Filter>Header Files\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine.cpp">
+      <Filter>Header Files\Engine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -146,20 +152,23 @@
     <ClInclude Include="render_structs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="scene.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="mesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="memory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="scene.h">
+      <Filter>Header Files\Models</Filter>
+    </ClInclude>
     <ClInclude Include="triangle_mesh.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh.h">
+      <Filter>Header Files\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="square_mesh.h">
+      <Filter>Header Files\Models</Filter>
     </ClInclude>
     <ClInclude Include="vertex_menagerie.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Models</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

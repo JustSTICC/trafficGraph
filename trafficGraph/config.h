@@ -20,6 +20,7 @@
 
 
 #define DEBUG true
+#define BACKGROUND_COLOR std::array<float, 4>{0.55f, 0.8f, 1.00f, 1.0f}
 
 struct BufferInput {
 
@@ -27,6 +28,7 @@ struct BufferInput {
 	vk::BufferUsageFlags usage;
 	vk::Device logicalDevice;
 	vk::PhysicalDevice physicalDevice;
+	vk::MemoryPropertyFlags memoryProperty;
 };
 
 struct Buffer {
@@ -40,5 +42,4 @@ struct Buffer {
 enum class meshTypes {
 	TRIANGLE,
 	SQUARE,
-	STAR
 };

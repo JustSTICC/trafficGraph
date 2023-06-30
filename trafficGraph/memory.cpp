@@ -32,6 +32,7 @@ uint32_t vkUtil::findMemoryTypeIndex(vk::PhysicalDevice physicalDevice, uint32_t
 			return i;
 		}
 	}
+	return 0;
 }
 
 void vkUtil::allocateBufferMemory(Buffer& buffer, const BufferInput& input) {
@@ -42,9 +43,37 @@ void vkUtil::allocateBufferMemory(Buffer& buffer, const BufferInput& input) {
 	allocInfo.allocationSize = memoryRequirements.size;
 	allocInfo.memoryTypeIndex = findMemoryTypeIndex(
 		input.physicalDevice, memoryRequirements.memoryTypeBits,
-		vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+		input.memoryProperty
 	);
 
 	buffer.bufferMemory = input.logicalDevice.allocateMemory(allocInfo);
 	input.logicalDevice.bindBufferMemory(buffer.buffer, buffer.bufferMemory, 0);
+
+}
+
+void vkUtil::copyBuffer(Buffer& srcBuffer, Buffer& dstBuffer, vk::DeviceSize size, vk::Queue queue, vk::CommandBuffer commandBuffer) {
+
+	commandBuffer.reset();
+
+	vk::CommandBufferBeginInfo beginInfo;
+	beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+	commandBuffer.begin(beginInfo);
+
+	vk::BufferCopy copyRegion;
+	copyRegion.srcOffset = 0;
+	copyRegion.dstOffset = 0;
+	copyRegion.size = size;
+	commandBuffer.copyBuffer(srcBuffer.buffer, dstBuffer.buffer, 1, &copyRegion);
+
+	commandBuffer.end();
+
+	vk::SubmitInfo submitInfo;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+	queue.submit(1, &submitInfo, nullptr);
+	queue.waitIdle();
+
+
+
+
 }

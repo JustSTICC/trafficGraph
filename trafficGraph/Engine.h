@@ -3,7 +3,7 @@
 #include"config.h"
 #include"frame.h"
 #include"scene.h"
-#include"triangle_mesh.h"
+#include"vertex_menagerie.h"
 
 
 class Engine
@@ -55,7 +55,7 @@ class Engine
 		int maxFramesInFlight, frameNumber;
 
 		//asset pointers
-		TriangleMesh* triangleMesh;
+		VertexMenagerie* meshes;
 
 		//glfw setup
 		void build_glfw_window();

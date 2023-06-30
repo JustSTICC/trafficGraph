@@ -151,12 +151,38 @@ void Engine::finalize_setup() {
 
 void Engine::make_assets() {
 
-	triangleMesh = new TriangleMesh(device, physicalDevice);
+	meshes = new VertexMenagerie();
+
+	std::vector<float> vertices = { {
+		0.0f, -0.05f, 0.0f, 1.0f, 0.0f,
+		0.05f, 0.05f, 0.0f, 1.0f, 0.0f,
+	   -0.05f, 0.05f, 0.0f, 1.0f, 0.0f
+} };
+	meshTypes type = meshTypes::TRIANGLE;
+	meshes->consume(type, vertices);
+
+	vertices = { {
+		-0.05f,  0.05f, 1.0f, 0.0f, 0.0f,
+		-0.05f, -0.05f, 1.0f, 0.0f, 0.0f,
+		 0.05f, -0.05f, 1.0f, 0.0f, 0.0f,
+		 0.05f, -0.05f, 1.0f, 0.0f, 0.0f,
+		 0.05f,  0.05f, 1.0f, 0.0f, 0.0f,
+		-0.05f,  0.05f, 1.0f, 0.0f, 0.0f
+	} };
+	type = meshTypes::SQUARE;
+	meshes->consume(type, vertices);
+
+	FinalizationChunk finalizationChunk;
+	finalizationChunk.logicalDevice = device;
+	finalizationChunk.physicalDevice = physicalDevice;
+	finalizationChunk.queue = graphicsQueue;
+	finalizationChunk.commandBuffer = mainCommandBuffer;
+	meshes->finalize(finalizationChunk);
 }
 
 void Engine::prepare_scene(vk::CommandBuffer commandBuffer) {
 
-	vk::Buffer vertexBuffer[] = { triangleMesh->vertexBuffer.buffer };
+	vk::Buffer vertexBuffer[] = { meshes->vertexBuffer.buffer };
 	vk::DeviceSize offsets[] = { 0 };
 	commandBuffer.bindVertexBuffers(0, 1, vertexBuffer, offsets);
 
@@ -180,7 +206,7 @@ void Engine::record_draw_commands(vk::CommandBuffer commandBuffer, uint32_t imag
 	renderPassInfo.renderArea.offset.x = 0;
 	renderPassInfo.renderArea.offset.y = 0;
 	renderPassInfo.renderArea.extent = swapchainExtent;
-	vk::ClearValue clearColor = { std::array<float, 4>{1.0f, 0.5f, 0.25f, 1.0f} };
+	vk::ClearValue clearColor = { BACKGROUND_COLOR };
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearColor;
 
@@ -189,14 +215,26 @@ void Engine::record_draw_commands(vk::CommandBuffer commandBuffer, uint32_t imag
 	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 
 	prepare_scene(commandBuffer);
-
+	int firstVertex = meshes->offsets.find(meshTypes::TRIANGLE)->second;
+	int vertextCount = meshes->sizes.find(meshTypes::TRIANGLE)->second;
 	for (glm::vec3 position : scene->trianglePosition) {
 
 		glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
 		vkUtil::ObjectData objectData;
 		objectData.model = model;
 		commandBuffer.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0 , sizeof(objectData), & objectData);
-		commandBuffer.draw(3, 1, 0, 0);
+		commandBuffer.draw(vertextCount, 1, firstVertex, 0);
+	}
+
+	firstVertex = meshes->offsets.find(meshTypes::SQUARE)->second;
+	vertextCount = meshes->sizes.find(meshTypes::SQUARE)->second;
+	for (glm::vec3 position : scene->squarePosition) {
+
+		glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
+		vkUtil::ObjectData objectData;
+		objectData.model = model;
+		commandBuffer.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(objectData), &objectData);
+		commandBuffer.draw(vertextCount, 1, firstVertex, 0);
 	}
 
 	commandBuffer.endRenderPass();
@@ -310,7 +348,7 @@ Engine::~Engine() {
 
 	cleanup_swapchain();
 
-	delete triangleMesh;
+	delete meshes;
 	
 	device.destroy();
 	instance.destroySurfaceKHR(surface);
