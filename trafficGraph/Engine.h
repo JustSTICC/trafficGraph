@@ -54,6 +54,10 @@ class Engine
 		//synchonization variables
 		int maxFramesInFlight, frameNumber;
 
+		//Descriptor objects
+		vk::DescriptorSetLayout descriptorSetLayout;
+		vk::DescriptorPool descriptorPool;
+
 		//asset pointers
 		VertexMenagerie* meshes;
 
@@ -67,14 +71,15 @@ class Engine
 		void make_swapchain();
 		void recreate_swapchain();
 
-
+		void make_descriptor_set_layout();
 		void make_pipeline();
 
 		void finalize_setup();
 		void make_framebuffers();
-		void make_frame_sync_objects();
+		void make_frame_resources();
 
 		void make_assets();
+		void prepare_frame(uint32_t imageIndex, Scene* scene);
 		void prepare_scene(vk::CommandBuffer commandBuffer);
 
 		void record_draw_commands( vk::CommandBuffer commandBuffer, uint32_t imageIndex, Scene* scene);

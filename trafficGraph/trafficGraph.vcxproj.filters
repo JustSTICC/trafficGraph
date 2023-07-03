@@ -60,12 +60,6 @@
     <ClCompile Include="scene.cpp">
       <Filter>Header Files\Models</Filter>
     </ClCompile>
-    <ClCompile Include="triangle_mesh.cpp">
-      <Filter>Header Files\Models</Filter>
-    </ClCompile>
-    <ClCompile Include="square_mesh.cpp">
-      <Filter>Header Files\Models</Filter>
-    </ClCompile>
     <ClCompile Include="vertex_menagerie.cpp">
       <Filter>Header Files\Models</Filter>
     </ClCompile>
@@ -158,17 +152,14 @@
     <ClInclude Include="scene.h">
       <Filter>Header Files\Models</Filter>
     </ClInclude>
-    <ClInclude Include="triangle_mesh.h">
-      <Filter>Header Files\Models</Filter>
-    </ClInclude>
     <ClInclude Include="mesh.h">
-      <Filter>Header Files\Models</Filter>
-    </ClInclude>
-    <ClInclude Include="square_mesh.h">
       <Filter>Header Files\Models</Filter>
     </ClInclude>
     <ClInclude Include="vertex_menagerie.h">
       <Filter>Header Files\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="descriptors.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

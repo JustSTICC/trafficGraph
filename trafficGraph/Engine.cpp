@@ -7,6 +7,7 @@
 #include"framebuffer.h"
 #include "commands.h"
 #include "sync.h"
+#include"descriptors.h"
 
 
 
@@ -27,6 +28,8 @@ Engine::Engine(int width, int height, GLFWwindow* window, bool debugMode ) {
 
 	make_device();
 
+	make_descriptor_set_layout();
+
 	make_pipeline();
 
 	finalize_setup();
@@ -41,6 +44,7 @@ void Engine::make_instance() {
 
 	instance = vkInit::make_instance(debugMode, "ID Tech 12");
 	dldi = vk::DispatchLoaderDynamic(instance, vkGetInstanceProcAddr);
+
 
 	if (debugMode) {
 		debugMessenger = vkInit::make_debug_messenger(instance, dldi);
@@ -93,11 +97,29 @@ void Engine::recreate_swapchain() {
 	cleanup_swapchain();
 	make_swapchain();
 	make_framebuffers();
-	make_frame_sync_objects();
+	make_frame_resources();
 
 	vkInit::commandBufferInputChunk commandbufferInput = { device, commandPool, swapchainFrames };
 	vkInit::make_frame_command_buffers(commandbufferInput, debugMode);
 
+}
+
+void Engine::make_descriptor_set_layout() {
+
+	vkInit::descriptorSetLayoutData bindings;
+	bindings.count = 2;
+
+	bindings.indices.push_back(0);
+	bindings.types.push_back(vk::DescriptorType::eUniformBuffer);
+	bindings.counts.push_back(1);
+	bindings.stages.push_back(vk::ShaderStageFlagBits::eVertex);
+
+	bindings.indices.push_back(1);
+	bindings.types.push_back(vk::DescriptorType::eStorageBuffer);
+	bindings.counts.push_back(1);
+	bindings.stages.push_back(vk::ShaderStageFlagBits::eVertex);
+
+	descriptorSetLayout = vkInit::make_descriptor_set_layout(device, bindings);
 }
 
 void Engine::make_pipeline() {
@@ -108,9 +130,10 @@ void Engine::make_pipeline() {
 	specification.fragmentFilepath = "shaders/fragment.spv";
 	specification.swapchainExtent = swapchainExtent;
 	specification.swapchainImageFormat = swapchainFormat;
+	specification.descriptorSetLayout = descriptorSetLayout;
 
 
-	vkInit::GraphicsPipeLineOutBundle output = vkInit::make_graphics_pipeline(specification, debugMode);
+	vkInit::GraphicsPipeLineOutBundle output = vkInit::create_graphics_pipeline(specification, debugMode);
 	layout = output.layout;
 	renderpass = output.renderpass;
 	pipeline = output.pipeline;
@@ -126,12 +149,22 @@ void Engine::make_framebuffers() {
 
 }
 
-void Engine::make_frame_sync_objects() {
+void Engine::make_frame_resources() {
+
+	vkInit::descriptorSetLayoutData bindings;
+	bindings.count = 1;
+	bindings.types.push_back(vk::DescriptorType::eUniformBuffer);
+	descriptorPool = vkInit::make_descriptor_pool(device, static_cast<uint32_t>(swapchainFrames.size()), bindings);
 
 	for (vkUtil::SwapChainFrame& frame : swapchainFrames) {
+
 		frame.inFlight = vkInit::make_fence(device, debugMode);
 		frame.imageAvailable = vkInit::make_semaphore(device, debugMode);
 		frame.renderFinished = vkInit::make_semaphore(device, debugMode);
+
+		frame.make_descriptor_resources(device, physicalDevice);
+
+		frame.descriptorSet = vkInit::allocate_descriptor_set(device, descriptorPool, descriptorSetLayout);
 	}
 }
 
@@ -145,7 +178,7 @@ void Engine::finalize_setup() {
 	mainCommandBuffer = vkInit::make_command_buffer(commandbufferInput, debugMode);
 	vkInit::make_frame_command_buffers(commandbufferInput, debugMode);
 
-	make_frame_sync_objects();
+	make_frame_resources();
 
 }
 
@@ -180,6 +213,44 @@ void Engine::make_assets() {
 	meshes->finalize(finalizationChunk);
 }
 
+void Engine::prepare_frame(uint32_t imageIndex, Scene* scene) {
+
+	vkUtil::SwapChainFrame& _frame = swapchainFrames[imageIndex];
+
+	glm::vec3 eye = { 1.0f, 0.0f, -1.0f };
+	glm::vec3 center = { 0.0f, 0.0f, 0.0f };
+	glm::vec3 up = { 0.0f, 0.0f, -1.0f };
+	glm::mat4 view = glm::lookAt(eye, center, up);
+
+	glm::mat4 projection = glm::perspective(
+		glm::radians(90.0f),
+		static_cast<float>(swapchainExtent.width) / static_cast<float>(swapchainExtent.height),
+		0.1f, 10.0f);
+	projection[1][1] *= -1;
+	
+	_frame.cameraData.view = view;
+	_frame.cameraData.projection = projection;
+	_frame.cameraData.viewProjection = projection * view;
+	
+	memcpy(
+		_frame.cameraDataWriteLocation,
+		&(_frame.cameraData),
+		sizeof(vkUtil::UBO)
+	);
+
+	size_t i = 0;
+	for (glm::vec3& position : scene->trianglePosition) {
+		_frame.modelTransforms[i++] = glm::translate(glm::mat4(1.0f), position);
+	}
+
+	for (glm::vec3& position : scene->squarePosition) {
+		_frame.modelTransforms[i++] = glm::translate(glm::mat4(1.0f), position);
+	}
+	memcpy(_frame.modelBufferWriteLocation, _frame.modelTransforms.data(), i * sizeof(glm::mat4));
+
+	_frame.write_descriptor_set(device);
+}
+
 void Engine::prepare_scene(vk::CommandBuffer commandBuffer) {
 
 	vk::Buffer vertexBuffer[] = { meshes->vertexBuffer.buffer };
@@ -191,6 +262,7 @@ void Engine::prepare_scene(vk::CommandBuffer commandBuffer) {
 void Engine::record_draw_commands(vk::CommandBuffer commandBuffer, uint32_t imageIndex, Scene* scene) {
 
 	vk::CommandBufferBeginInfo beginInfo = {};
+
 	try {
 		commandBuffer.begin(beginInfo);
 	}
@@ -206,36 +278,30 @@ void Engine::record_draw_commands(vk::CommandBuffer commandBuffer, uint32_t imag
 	renderPassInfo.renderArea.offset.x = 0;
 	renderPassInfo.renderArea.offset.y = 0;
 	renderPassInfo.renderArea.extent = swapchainExtent;
+
 	vk::ClearValue clearColor = { BACKGROUND_COLOR };
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearColor;
 
 	commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
 
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, 0, swapchainFrames[imageIndex].descriptorSet, nullptr);
+
 	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 
 	prepare_scene(commandBuffer);
 	int firstVertex = meshes->offsets.find(meshTypes::TRIANGLE)->second;
 	int vertextCount = meshes->sizes.find(meshTypes::TRIANGLE)->second;
-	for (glm::vec3 position : scene->trianglePosition) {
-
-		glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
-		vkUtil::ObjectData objectData;
-		objectData.model = model;
-		commandBuffer.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0 , sizeof(objectData), & objectData);
-		commandBuffer.draw(vertextCount, 1, firstVertex, 0);
-	}
+	uint32_t startInstance = 0;
+	uint32_t instanceCount = static_cast<uint32_t>(scene->trianglePosition.size());
+	commandBuffer.draw(vertextCount, instanceCount, firstVertex, startInstance);
+	startInstance += instanceCount;
 
 	firstVertex = meshes->offsets.find(meshTypes::SQUARE)->second;
 	vertextCount = meshes->sizes.find(meshTypes::SQUARE)->second;
-	for (glm::vec3 position : scene->squarePosition) {
-
-		glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
-		vkUtil::ObjectData objectData;
-		objectData.model = model;
-		commandBuffer.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(objectData), &objectData);
-		commandBuffer.draw(vertextCount, 1, firstVertex, 0);
-	}
+	instanceCount = static_cast<uint32_t>(scene->squarePosition.size());
+	commandBuffer.draw(vertextCount, instanceCount, firstVertex, startInstance);
+	startInstance += instanceCount;
 
 	commandBuffer.endRenderPass();
 
@@ -270,6 +336,8 @@ void Engine::render(Scene* scene) {
 	vk::CommandBuffer commandBuffer = swapchainFrames[frameNumber].commandBuffer;
 
 	commandBuffer.reset();
+
+	prepare_frame(imageIndex, scene);
 
 	record_draw_commands(commandBuffer, imageIndex, scene);
 
@@ -326,9 +394,18 @@ void Engine::cleanup_swapchain() {
 		device.destroyFence(frame.inFlight);
 		device.destroySemaphore(frame.imageAvailable);
 		device.destroySemaphore(frame.renderFinished);
-	}
 
+		device.unmapMemory(frame.cameraDataBuffer.bufferMemory);
+		device.freeMemory(frame.cameraDataBuffer.bufferMemory);
+		device.destroyBuffer(frame.cameraDataBuffer.buffer);
+
+		device.unmapMemory(frame.modelBuffer.bufferMemory);
+		device.freeMemory(frame.modelBuffer.bufferMemory);
+		device.destroyBuffer(frame.modelBuffer.buffer);
+	}
 	device.destroySwapchainKHR(swapchain);
+
+	device.destroyDescriptorPool(descriptorPool);
 }
 
 Engine::~Engine() {
@@ -347,6 +424,8 @@ Engine::~Engine() {
 	device.destroyRenderPass(renderpass);
 
 	cleanup_swapchain();
+
+	device.destroyDescriptorSetLayout(descriptorSetLayout);
 
 	delete meshes;
 	
