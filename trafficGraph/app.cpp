@@ -1,13 +1,13 @@
 #include "app.h"
 
 
-App::App(int width, int height, bool debug) {
+App::App(int width, int height, std::list<location::Location > locations, bool debug) {
 
 	build_glfw_window(width, height, debug);
 
-	graphicsEngine = new Engine(width, height, window, debug);
+	graphicsEngine = new Engine(width, height, window, locations, debug);
 
-	scene = new Scene();
+	scene = new Scene(locations);
 }
 
 void App::build_glfw_window(int width, int height, bool debugMode) {

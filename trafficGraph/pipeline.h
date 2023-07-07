@@ -19,7 +19,8 @@ namespace vkInit {
 	struct  GraphicsPipeLineOutBundle {
 		vk::PipelineLayout layout;
 		vk::RenderPass renderpass;
-		vk::Pipeline pipeline;
+		vk::Pipeline pipelineTriangle;
+		vk::Pipeline pipelineLine;
 	};
 
 	vk::PipelineLayout make_pipeline_layout(vk::Device device, vk::DescriptorSetLayout layout, bool debug) {
@@ -96,11 +97,21 @@ namespace vkInit {
 		return vertexInputInfo;
 	}
 
-	vk::PipelineInputAssemblyStateCreateInfo make_input_assemply_info() {
+	vk::PipelineInputAssemblyStateCreateInfo make_triangle_input_assemply_info() {
 
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo = {};
 		inputAssemblyInfo.flags = vk::PipelineInputAssemblyStateCreateFlags();
 		inputAssemblyInfo.topology = vk::PrimitiveTopology::eTriangleList;
+
+		return inputAssemblyInfo;
+
+	}
+
+	vk::PipelineInputAssemblyStateCreateInfo make_line_input_assemply_info() {
+
+		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo = {};
+		inputAssemblyInfo.flags = vk::PipelineInputAssemblyStateCreateFlags();
+		inputAssemblyInfo.topology = vk::PrimitiveTopology::eLineList;
 
 		return inputAssemblyInfo;
 
@@ -150,7 +161,7 @@ namespace vkInit {
 		return viewportState;
 	}
 
-	vk::PipelineRasterizationStateCreateInfo make_rasterizer() {
+	vk::PipelineRasterizationStateCreateInfo make_triangle_rasterizer() {
 
 		vk::PipelineRasterizationStateCreateInfo rasterizer;
 		rasterizer.flags = vk::PipelineRasterizationStateCreateFlags();
@@ -158,6 +169,21 @@ namespace vkInit {
 		rasterizer.rasterizerDiscardEnable = VK_FALSE;
 		rasterizer.polygonMode = vk::PolygonMode::eFill;
 		rasterizer.lineWidth = 1.0f;
+		rasterizer.cullMode = vk::CullModeFlagBits::eBack;
+		rasterizer.frontFace = vk::FrontFace::eClockwise;
+		rasterizer.depthBiasEnable = VK_FALSE;
+
+		return rasterizer;
+	}
+
+	vk::PipelineRasterizationStateCreateInfo make_line_rasterizer() {
+
+		vk::PipelineRasterizationStateCreateInfo rasterizer;
+		rasterizer.flags = vk::PipelineRasterizationStateCreateFlags();
+		rasterizer.depthClampEnable = VK_FALSE;
+		rasterizer.rasterizerDiscardEnable = VK_FALSE;
+		rasterizer.polygonMode = vk::PolygonMode::eLine;
+		rasterizer.lineWidth = 1.5f;
 		rasterizer.cullMode = vk::CullModeFlagBits::eBack;
 		rasterizer.frontFace = vk::FrontFace::eClockwise;
 		rasterizer.depthBiasEnable = VK_FALSE;
@@ -206,21 +232,26 @@ namespace vkInit {
 
 	GraphicsPipeLineOutBundle create_graphics_pipeline(GraphicsPipeLineInBundle specification, bool debug) {
 
-		vk::GraphicsPipelineCreateInfo pipelineInfo = {};
-		pipelineInfo.flags = vk::PipelineCreateFlags();
-		
+		vk::GraphicsPipelineCreateInfo pipelineTriangleInfo = {};
+		vk::GraphicsPipelineCreateInfo pipelineLineInfo = {};
+		pipelineTriangleInfo.flags = vk::PipelineCreateFlags();
+		pipelineLineInfo.flags = vk::PipelineCreateFlags();
+
 		//Shader stages, to be populated later
 		std::vector <vk::PipelineShaderStageCreateInfo> shaderStages;
-		
+
 		//Vertex input
 		vk::VertexInputBindingDescription bindingDescription = vkMesh::getPosColorBindingDescription();
 		std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions = vkMesh::getPosColorAttibuteDescription();
 		vk::PipelineVertexInputStateCreateInfo vertexInputInfo = make_vertex_input_info(bindingDescription, attributeDescriptions);
-		pipelineInfo.pVertexInputState = &vertexInputInfo;
+		pipelineTriangleInfo.pVertexInputState = &vertexInputInfo;
+		pipelineLineInfo.pVertexInputState = &vertexInputInfo;
 
 		//Input Assembly
-		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo = make_input_assemply_info();
-		pipelineInfo.pInputAssemblyState = &inputAssemblyInfo;
+		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfoTriangle = make_triangle_input_assemply_info();
+		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfoLine = make_line_input_assemply_info();
+		pipelineTriangleInfo.pInputAssemblyState = &inputAssemblyInfoTriangle;
+		pipelineLineInfo.pInputAssemblyState = &inputAssemblyInfoLine;
 
 		//Vertex Shader
 		if (debug) {
@@ -234,12 +265,16 @@ namespace vkInit {
 		vk::Viewport viewport = make_viewport(specification);
 		vk::Rect2D scissor = make_scissor(specification);
 
-		vk::PipelineViewportStateCreateInfo viewportState = make_viewport_state(viewport,scissor);
-		pipelineInfo.pViewportState = &viewportState;
+		vk::PipelineViewportStateCreateInfo viewportState = make_viewport_state(viewport, scissor);
+		pipelineTriangleInfo.pViewportState = &viewportState;
+		pipelineLineInfo.pViewportState = &viewportState;
 
 		//Rasterizer
-		vk::PipelineRasterizationStateCreateInfo rasterizer = make_rasterizer();
-		pipelineInfo.pRasterizationState = &rasterizer;
+		vk::PipelineRasterizationStateCreateInfo rasterizerTriangle = make_triangle_rasterizer();
+		vk::PipelineRasterizationStateCreateInfo rasterizerLine= make_line_rasterizer();
+		pipelineTriangleInfo.pRasterizationState = &rasterizerTriangle;
+		pipelineLineInfo.pRasterizationState = &rasterizerLine;
+
 
 		//Fragment Shader
 		if (debug) {
@@ -248,26 +283,31 @@ namespace vkInit {
 		vk::ShaderModule fragmentShader = vkUtil::createModule(specification.fragmentFilepath, specification.device, debug);
 		vk::PipelineShaderStageCreateInfo fragmentShaderInfo = make_fragment_shader_info(fragmentShader);
 		shaderStages.push_back(fragmentShaderInfo);
-		pipelineInfo.stageCount = shaderStages.size();
-		pipelineInfo.pStages = shaderStages.data();
+		pipelineTriangleInfo.stageCount = shaderStages.size();
+		pipelineTriangleInfo.pStages = shaderStages.data();
+		pipelineLineInfo.stageCount = shaderStages.size();
+		pipelineLineInfo.pStages = shaderStages.data();
 
 		//Multisampling
 		vk::PipelineMultisampleStateCreateInfo multisampling = make_multisampling();
-		pipelineInfo.pMultisampleState = &multisampling;
+		pipelineTriangleInfo.pMultisampleState = &multisampling;
+		pipelineLineInfo.pMultisampleState = &multisampling;
 
 		//Color Blend
 		vk::PipelineColorBlendAttachmentState colorBlendAttachment = {};
 		colorBlendAttachment.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 		colorBlendAttachment.blendEnable = VK_FALSE;
 		vk::PipelineColorBlendStateCreateInfo colorBlending = make_color_blending(colorBlendAttachment);
-		pipelineInfo.pColorBlendState = &colorBlending;
+		pipelineTriangleInfo.pColorBlendState = &colorBlending;
+		pipelineLineInfo.pColorBlendState = &colorBlending;
 
 		//Pipeline Layout
 		if(debug) {
 			std::cout << "Create Pipeline Layout" << std::endl;
 		}
 		vk::PipelineLayout layout = make_pipeline_layout(specification.device, specification.descriptorSetLayout, debug);
-		pipelineInfo.layout = layout;
+		pipelineTriangleInfo.layout = layout;
+		pipelineLineInfo.layout = layout;
 
 		//Renderpass
 		if (debug) {
@@ -276,15 +316,18 @@ namespace vkInit {
 		vk::RenderPass renderpass = make_renderpass(specification.device, specification.swapchainImageFormat, debug);
 
 		//Extra stuff
-		pipelineInfo.renderPass = renderpass;
+		pipelineTriangleInfo.renderPass = renderpass;
+		pipelineLineInfo.renderPass = renderpass;
 
 		//Make the pipeline
 		if (debug) {
 			std::cout << "Create Graphics Pipeline" << std::endl;
 		}
-		vk::Pipeline graphicsPipeline;
+		vk::Pipeline graphicsPipelineTriangle;
+		vk::Pipeline graphicsPipelineLine;
 		try {
-			graphicsPipeline = (specification.device.createGraphicsPipeline(nullptr, pipelineInfo)).value;
+			graphicsPipelineTriangle = (specification.device.createGraphicsPipeline(nullptr, pipelineTriangleInfo)).value;
+			graphicsPipelineLine = (specification.device.createGraphicsPipeline(nullptr, pipelineLineInfo)).value;
 		}
 		catch (vk::SystemError err) {
 			if (debug) {
@@ -296,7 +339,8 @@ namespace vkInit {
 		GraphicsPipeLineOutBundle output = {};
 		output.layout = layout;
 		output.renderpass = renderpass;
-		output.pipeline = graphicsPipeline;
+		output.pipelineTriangle = graphicsPipelineTriangle;
+		output.pipelineLine = graphicsPipelineLine;
 
 		specification.device.destroyShaderModule(vertexShader);
 		specification.device.destroyShaderModule(fragmentShader);

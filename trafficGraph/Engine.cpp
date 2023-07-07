@@ -12,12 +12,13 @@
 
 
 
-Engine::Engine(int width, int height, GLFWwindow* window, bool debugMode ) {
+Engine::Engine(int width, int height, GLFWwindow* window, std::list<location::Location> graph, bool debugMode ) {
 
 	this->width = width;
 	this->height = height;
 	this->window = window;
 	this->debugMode = debugMode;
+	this->graph = graph;
 
 	if (debugMode) {
 		std::cout << "Making a graphics engine\n";
@@ -136,7 +137,8 @@ void Engine::make_pipeline() {
 	vkInit::GraphicsPipeLineOutBundle output = vkInit::create_graphics_pipeline(specification, debugMode);
 	layout = output.layout;
 	renderpass = output.renderpass;
-	pipeline = output.pipeline;
+	pipelineTriangle = output.pipelineTriangle;
+	pipelineLine = output.pipelineLine;
 }
 
 void Engine::make_framebuffers() {
@@ -187,22 +189,57 @@ void Engine::make_assets() {
 	meshes = new VertexMenagerie();
 
 	std::vector<float> vertices = { {
-		0.0f, -0.05f, 0.0f, 1.0f, 0.0f,
-		0.05f, 0.05f, 0.0f, 1.0f, 0.0f,
-	   -0.05f, 0.05f, 0.0f, 1.0f, 0.0f
+		0.00f, 0.00f, 0.0f, 1.0f, 0.0f, 0.0f,
+		0.00f, -0.05f, -0.05f, 0.0f, 0.0f, 1.0f,
+	    0.00f, 0.05f, -0.05f, 0.0f, 0.0f, 1.0f
 } };
 	meshTypes type = meshTypes::TRIANGLE;
 	meshes->consume(type, vertices);
 
-	vertices = { {
-		-0.05f,  0.05f, 1.0f, 0.0f, 0.0f,
-		-0.05f, -0.05f, 1.0f, 0.0f, 0.0f,
-		 0.05f, -0.05f, 1.0f, 0.0f, 0.0f,
-		 0.05f, -0.05f, 1.0f, 0.0f, 0.0f,
-		 0.05f,  0.05f, 1.0f, 0.0f, 0.0f,
-		-0.05f,  0.05f, 1.0f, 0.0f, 0.0f
+	/*vertices = {{
+		-0.05f,  0.05f, 0.0f, 1.0f, 0.0f, 0.0f,
+		-0.05f, -0.05f, 0.0f, 1.0f, 0.0f, 0.0f,
+		 0.05f, -0.05f, 0.0f, 1.0f, 0.0f, 0.0f,
+		 0.05f, -0.05f, 0.0f, 1.0f, 0.0f, 0.0f,
+		 0.05f,  0.05f, 0.0f, 1.0f, 0.0f, 0.0f,
+		-0.05f,  0.05f, 0.0f, 1.0f, 0.0f, 0.0f
 	} };
 	type = meshTypes::SQUARE;
+	meshes->consume(type, vertices);*/
+	
+	vertices.clear();
+	for (location::Location location : graph) {
+		float x1, y1, z1;
+		x1 = static_cast<float>(location.get_x() / 10000);
+		y1 = static_cast<float>(location.get_y() / 10000);
+		z1 = static_cast<float>(location.get_z() / 100);
+		for (connection::Connection connection : location.get_list()) {
+			float x2, y2, z2;
+			x2 = static_cast<float>(location.get_x() / 10000);
+			y2 = static_cast<float>(location.get_y() / 10000);
+			z2 = static_cast<float>(location.get_z() / 100);
+			vertices.push_back(x1);
+			vertices.push_back(y1);
+			vertices.push_back(z1);
+			vertices.push_back(1.0f);
+			vertices.push_back(0.0f);
+			vertices.push_back(0.0f);
+			vertices.push_back(x2);
+			vertices.push_back(y2);
+			vertices.push_back(z2);
+			vertices.push_back(1.0f);
+			vertices.push_back(0.0f);
+			vertices.push_back(0.0f);
+		}
+	}
+	/*
+	vertices = { {
+	0.00f, 0.00f, 0.0f, 1.0f, 0.0f, 0.0f,
+	0.05f, -0.05f, 0.00f, 0.0f, 0.0f, 1.0f,
+	0.00f, 0.00f, 0.0f, 1.0f, 0.0f, 0.0f,
+	-0.05f, 0.05f, 0.00f, 0.0f, 0.0f, 1.0f,
+} };*/
+	type = meshTypes::LINE;
 	meshes->consume(type, vertices);
 
 	FinalizationChunk finalizationChunk;
@@ -217,13 +254,13 @@ void Engine::prepare_frame(uint32_t imageIndex, Scene* scene) {
 
 	vkUtil::SwapChainFrame& _frame = swapchainFrames[imageIndex];
 
-	glm::vec3 eye = { 1.0f, 0.0f, -1.0f };
-	glm::vec3 center = { 0.0f, 0.0f, 0.0f };
+	glm::vec3 eye = {-0.8f,-0.8f, -1.0f };
+	glm::vec3 center = { 1.0f, 1.0f, 0.0f };
 	glm::vec3 up = { 0.0f, 0.0f, -1.0f };
 	glm::mat4 view = glm::lookAt(eye, center, up);
 
 	glm::mat4 projection = glm::perspective(
-		glm::radians(90.0f),
+		glm::radians(50.0f),
 		static_cast<float>(swapchainExtent.width) / static_cast<float>(swapchainExtent.height),
 		0.1f, 10.0f);
 	projection[1][1] *= -1;
@@ -243,7 +280,7 @@ void Engine::prepare_frame(uint32_t imageIndex, Scene* scene) {
 		_frame.modelTransforms[i++] = glm::translate(glm::mat4(1.0f), position);
 	}
 
-	for (glm::vec3& position : scene->squarePosition) {
+	for (glm::vec3& position : scene->linePosition) {
 		_frame.modelTransforms[i++] = glm::translate(glm::mat4(1.0f), position);
 	}
 	memcpy(_frame.modelBufferWriteLocation, _frame.modelTransforms.data(), i * sizeof(glm::mat4));
@@ -287,21 +324,32 @@ void Engine::record_draw_commands(vk::CommandBuffer commandBuffer, uint32_t imag
 
 	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, 0, swapchainFrames[imageIndex].descriptorSet, nullptr);
 
-	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineTriangle);
 
 	prepare_scene(commandBuffer);
 	int firstVertex = meshes->offsets.find(meshTypes::TRIANGLE)->second;
 	int vertextCount = meshes->sizes.find(meshTypes::TRIANGLE)->second;
 	uint32_t startInstance = 0;
 	uint32_t instanceCount = static_cast<uint32_t>(scene->trianglePosition.size());
+	std::cout << "O-O> " << firstVertex << " " << vertextCount << " " << instanceCount << std::endl;
 	commandBuffer.draw(vertextCount, instanceCount, firstVertex, startInstance);
 	startInstance += instanceCount;
 
-	firstVertex = meshes->offsets.find(meshTypes::SQUARE)->second;
+	/*firstVertex = meshes->offsets.find(meshTypes::SQUARE)->second;
 	vertextCount = meshes->sizes.find(meshTypes::SQUARE)->second;
 	instanceCount = static_cast<uint32_t>(scene->squarePosition.size());
 	commandBuffer.draw(vertextCount, instanceCount, firstVertex, startInstance);
+	startInstance += instanceCount;*/
+	
+	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineLine);
+	
+	firstVertex = meshes->offsets.find(meshTypes::LINE)->second;
+	vertextCount = meshes->sizes.find(meshTypes::LINE)->second;
+	instanceCount = static_cast<uint32_t>(scene->linePosition.size());
+	std::cout << "0-0> " << firstVertex << " " << vertextCount << " " << instanceCount << " " << startInstance << std::endl;
+	commandBuffer.draw(vertextCount, instanceCount, firstVertex, startInstance);
 	startInstance += instanceCount;
+
 
 	commandBuffer.endRenderPass();
 
@@ -419,7 +467,8 @@ Engine::~Engine() {
 
 	device.destroyCommandPool(commandPool);
 
-	device.destroyPipeline(pipeline);
+	device.destroyPipeline(pipelineTriangle);
+	device.destroyPipeline(pipelineLine);
 	device.destroyPipelineLayout(layout);
 	device.destroyRenderPass(renderpass);
 

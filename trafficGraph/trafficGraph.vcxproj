@@ -194,6 +194,10 @@
     <None Include="shaders\shader.vert" />
     <None Include="shaders\shader_compiler.bat" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="location.txt" />
+    <Text Include="Rules.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -42,4 +42,5 @@ struct Buffer {
 enum class meshTypes {
 	TRIANGLE,
 	SQUARE,
+	LINE
 };

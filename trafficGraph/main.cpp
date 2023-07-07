@@ -23,11 +23,11 @@ int main() {
     std::list<ruletype::RuleType> ruleTypes;
     std::list<location::Location> route, route1;
 
-    App* myApp = new App(640, 480, true);
+    /*App* myApp = new App(640, 480, true);
 
     myApp->run();
 
-    delete myApp;
+    delete myApp;*/
 
     location::Location start, end;
 
@@ -50,7 +50,14 @@ int main() {
         {
         case 1: console::add_Location(graph); break;
         case 2: console::add_Connection(graph); break;
-        case 3: console::display(graph); break;
+        case 3: {
+            App* myApp = new App(810, 640, graph, true);
+
+            myApp->run();
+
+            delete myApp;
+            console::display(graph); break;
+        }
         case 4: graph = read::read_location(); std::cout << "Save loaded!\n"; break;
         case 5: write::write_locations(graph); break;
         case 6: {

@@ -10,7 +10,7 @@ void VertexMenagerie::consume(meshTypes type, std::vector<float> vertexData) {
 		lump.push_back(attribute);
 	}
 
-	int vertexCount = static_cast<int>(vertexData.size() / 5);
+	int vertexCount = static_cast<int>(vertexData.size() / 6);
 
 	offsets.insert(std::make_pair(type, offset));
 	sizes.insert(std::make_pair(type, vertexCount));
@@ -20,8 +20,11 @@ void VertexMenagerie::consume(meshTypes type, std::vector<float> vertexData) {
 
 void VertexMenagerie::finalize(FinalizationChunk finalizationChunk) {
 
+	for (int i = 0; i < lump.size(); i++) {
+		std::cout << lump[i]<< " ";
+	}
+	std::cout << std::endl;
 	logicalDevice = finalizationChunk.logicalDevice;
-
 	BufferInput inputChunk;
 	inputChunk.logicalDevice = finalizationChunk.logicalDevice;
 	inputChunk.physicalDevice = finalizationChunk.physicalDevice;

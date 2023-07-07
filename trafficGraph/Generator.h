@@ -21,7 +21,7 @@ namespace build {
 
 		for (int i = 0; i < numLocations; i++) {
 
-			std::uniform_real_distribution<double>  generatorXY(0, 100);
+			std::uniform_real_distribution<double>  generatorXY(0, 10000);
 			std::uniform_real_distribution<double>  generatorZ(0, 100);
 			
 			

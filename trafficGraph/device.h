@@ -81,8 +81,6 @@ namespace vkInit {
 		return true;
 	}
 
-
-
 	vk::PhysicalDevice choose_physical_device(vk::Instance& instance, bool debug) {
 
 		if (debug) {
@@ -100,6 +98,7 @@ namespace vkInit {
 			if (debug) {
 				log_device_properties(device);
 			}
+
 			if(isSuitable(device, debug)){
 				return device;
 			}
@@ -109,8 +108,8 @@ namespace vkInit {
 		return nullptr;
 	}
 
-
 	vk::Device create_logical_device(vk::PhysicalDevice physicalDevice, vk::SurfaceKHR surface, bool debug) {
+
 
 		vkUtil::QueueFamilyIndices indices = vkUtil::findQueueFamilies(physicalDevice, surface, debug);
 
@@ -135,6 +134,8 @@ namespace vkInit {
 		};
 
 		vk::PhysicalDeviceFeatures deviceFeatures = vk::PhysicalDeviceFeatures();
+		physicalDevice.getFeatures(&deviceFeatures);
+		deviceFeatures.setFillModeNonSolid(true);
 		
 		std::vector<const char*> enabledLayers;
 		if (debug) {

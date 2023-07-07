@@ -4,6 +4,7 @@
 #include"frame.h"
 #include"scene.h"
 #include"vertex_menagerie.h"
+#include"Location.h"
 
 
 class Engine
@@ -11,7 +12,7 @@ class Engine
 
 	public:
 
-		Engine(int width, int height, GLFWwindow* window, bool debugMode);
+		Engine(int width, int height, GLFWwindow* window, std::list<location::Location> graph, bool debugMode);
 
 		~Engine();
 
@@ -26,6 +27,9 @@ class Engine
 		int width;
 		int height;
 		GLFWwindow* window;
+
+		//graph
+		std::list<location::Location> graph;
 
 		//vulkan instance -related variable
 		vk::Instance instance{ nullptr };
@@ -45,7 +49,8 @@ class Engine
 		//pipeline variables
 		vk::PipelineLayout layout;
 		vk::RenderPass renderpass;
-		vk::Pipeline pipeline;
+		vk::Pipeline pipelineTriangle;
+		vk::Pipeline pipelineLine;
 
 		//command variables
 		vk::CommandPool commandPool;

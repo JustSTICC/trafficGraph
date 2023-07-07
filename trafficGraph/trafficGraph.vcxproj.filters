@@ -173,4 +173,8 @@
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="Rules.txt" />
+    <Text Include="location.txt" />
+  </ItemGroup>
 </Project>

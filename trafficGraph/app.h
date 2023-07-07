@@ -2,6 +2,7 @@
 #include "config.h"
 #include "Engine.h"
 #include "scene.h"
+#include "Location.h"
 
 
 class App {
@@ -20,7 +21,7 @@ private:
 	void calculateFrameRate();
 
 public:
-	App(int width, int height, bool debug);
+	App(int width, int height, std::list<location::Location> locations , bool debug);
 	~App();
 	void run();
 
